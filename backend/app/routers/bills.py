@@ -342,22 +342,30 @@ async def update_item(creator_token: str, item_id: str, request: ItemUpdateReque
 async def delete_item(creator_token: str, item_id: str):
     supabase = get_supabase()
 
-    # Verify bill ownership
-    bill_result = supabase.table("bills").select("id").eq("creator_token", creator_token).execute()
+    # Verify bill ownership and get current subtotal
+    bill_result = supabase.table("bills").select("id, subtotal").eq("creator_token", creator_token).execute()
     if not bill_result.data:
         raise HTTPException(status_code=404, detail="Bill not found")
 
-    bill_id = bill_result.data[0]["id"]
+    bill = bill_result.data[0]
+    bill_id = bill["id"]
 
-    # Verify item belongs to this bill
+    # Verify item belongs to this bill and get its price
     item_result = supabase.table("bill_items").select("*").eq("id", item_id).eq("bill_id", bill_id).execute()
     if not item_result.data:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    item_price = item_result.data[0]["price"]
+
     # Delete item
     supabase.table("bill_items").delete().eq("id", item_id).execute()
 
-    return {"success": True}
+    # Update subtotal (subtract deleted item's price)
+    current_subtotal = bill.get("subtotal") or 0
+    new_subtotal = max(0, current_subtotal - item_price)
+    supabase.table("bills").update({"subtotal": new_subtotal}).eq("id", bill_id).execute()
+
+    return {"success": True, "new_subtotal": new_subtotal}
 
 
 @router.patch("/creator/{creator_token}/totals", response_model=BillResponse)
