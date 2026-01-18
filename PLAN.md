@@ -8,12 +8,11 @@
 │   (Vercel)      │     │   (Vercel)       │     │  (DB + Storage) │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                │
-                    ┌──────────┼──────────┐
-                    ▼          ▼          ▼
-              ┌─────────┐ ┌─────────┐ ┌─────────┐
-              │ OpenAI  │ │ Twilio  │ │Supabase │
-              │ Vision  │ │   SMS   │ │   OTP   │
-              └─────────┘ └─────────┘ └─────────┘
+                               ▼
+                         ┌─────────┐
+                         │ OpenAI  │
+                         │ Vision  │
+                         └─────────┘
 ```
 
 ### Stack
@@ -22,8 +21,6 @@
 - **Backend**: FastAPI (deployed to Vercel)
 - **Database & Storage**: Supabase (PostgreSQL + file storage)
 - **Bill Parsing**: OpenAI Vision API
-- **SMS**: Twilio
-- **Phone Verification**: Supabase OTP
 
 ### Repository Structure
 
@@ -173,9 +170,6 @@ Each step will be reviewed before proceeding to the next.
 ### Step 8: Participant Submission
 - "Done" button when finished claiming
 - Prompt for name (required)
-- Prompt for phone (optional)
-- If phone provided, verify via Supabase OTP
-- Send confirmation SMS via Twilio
 - Update participant status to 'done'
 
 ### Step 9: Creator Live Dashboard
@@ -188,7 +182,6 @@ Each step will be reviewed before proceeding to the next.
 - Prompt creator for Venmo/Zelle/CashApp handles
 - Calculate final totals (including equal tax/tip split)
 - Update bill status to 'complete'
-- Send final SMS to verified participants with amounts and payment details
 - Generate final results page at `/s/[shareToken]/final`
 
 ---
@@ -208,3 +201,27 @@ Each step will be reviewed before proceeding to the next.
 6. **Bills persist forever**: No automatic cleanup or expiration.
 
 7. **Payment tracking out of scope**: No marking participants as "paid" within the app.
+
+8. **SMS notifications descoped**: Phone number collection, OTP verification, and SMS notifications are descoped for MVP due to carrier registration requirements.
+
+---
+
+## Future Enhancements
+
+Features intentionally descoped for MVP that can be added later:
+
+1. **SMS Notifications (Twilio)**
+   - Collect participant phone numbers (optional)
+   - OTP verification via Supabase
+   - Confirmation SMS when participant submits their claims
+   - Final totals SMS when bill is marked complete
+   - Requires: Twilio account with verified toll-free number or A2P 10DLC registration
+
+2. **Unit-level item claiming**
+   - Allow claiming individual units when quantity > 1 (e.g., "4 of 7 beers")
+
+3. **Real-time updates**
+   - Supabase Realtime subscriptions or polling for live bill updates
+
+4. **Payment tracking**
+   - Creator can mark participants as "paid"
